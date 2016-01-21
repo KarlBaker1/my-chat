@@ -4,6 +4,7 @@ import com.google.gson.*;
 
 import java.io.*;
 import java.lang.reflect.Type;
+import java.nio.file.Files;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
@@ -48,7 +49,7 @@ public class ConversationExporter {
      */
     public void writeConversation(Conversation conversation, String outputFilePath) throws Exception {
         // TODO: Do we need both to be resources, or will buffered writer close the stream?
-        try (OutputStream os = new FileOutputStream(outputFilePath, true);
+        try (OutputStream os = new FileOutputStream(outputFilePath, false);
              BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(os))) {
 
             // TODO: Maybe reuse this? Make it more testable...
@@ -84,8 +85,12 @@ public class ConversationExporter {
 
             while ((line = r.readLine()) != null) {
                 String[] split = line.split(" ");
+                String timeStr = split[0];
+                Instant time = Instant.ofEpochSecond(Long.parseUnsignedLong(timeStr));
+                String sender = split[1];
+                String message = line.substring(timeStr.length() + sender.length() + 2);
 
-                messages.add(new Message(Instant.ofEpochSecond(Long.parseUnsignedLong(split[0])), split[1], split[2]));
+                messages.add(new Message(time, sender, message));
             }
 
             return new Conversation(conversationName, messages);
